@@ -19,14 +19,16 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/cache/restore@v4
         with:
-          path: data/news.json
+          path: data/
           key: news-${{ github.run_id }}
           restore-keys: news-
       - name: Update feeds
         run: python3 scripts/update.py
+      - name: Update Hangzhou weather
+        run: python3 scripts/weather.py
       - uses: actions/cache/save@v4
         with:
-          path: data/news.json
+          path: data/
           key: news-${{ github.run_id }}
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
