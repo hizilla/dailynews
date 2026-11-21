@@ -27,9 +27,9 @@ async function loadNews() {
       const unique = items.filter((item, i) => items.findIndex(other => other.url === item.url || other.title === item.title) === i);
       const list = unique.map(item => {
         let url;
-        try { url = new URL(item.url); } catch { return ''; }
+        try { url = new URL(item.original_url || item.url); } catch { return ''; }
         if (!['http:', 'https:'].includes(url.protocol)) return '';
-        const messages = {insufficient:'来源未提供足够内容，暂无法生成摘要。', unconfigured:'摘要服务尚未配置。', pending:'摘要等待下次更新。', failed:'摘要生成失败，将在下次更新时重试。'};
+        const messages = {article_unavailable:'无法获取新闻原文，暂无法生成摘要。', insufficient:'原文内容不足，暂无法生成摘要。', unconfigured:'摘要服务尚未配置。', pending:'摘要等待下次更新。', failed:'摘要生成失败，将在下次更新时重试。'};
         const summary = item.summary ? `<p class="summary">${escapeHtml(item.summary)}</p><span class="summary-label">AI 摘要 · 请以原文为准</span>` : `<p class="summary-status">${escapeHtml(messages[item.summary_status] || '暂无摘要。')}</p>`;
         return `<article class="article"><div class="article-title">${escapeHtml(item.title)}</div>${summary}<div class="meta">${escapeHtml(item.source)}${time(item.published) ? ' · ' + escapeHtml(time(item.published)) : ''} · <a href="${escapeHtml(url.href)}" target="_blank" rel="noopener noreferrer">查看来源 ↗</a></div></article>`;
       }).join('');
