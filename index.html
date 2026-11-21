@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f5f4ef">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>每日一览</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <main>
+    <header><div><span class="eyebrow">YOUR DAILY BRIEF</span><h1>每日一览</h1><p>天气、世界，还有一些新鲜事。</p></div><span class="date" id="today"></span></header>
+    <section class="card weather">
+      <div class="section-head"><div><span class="eyebrow">WEATHER</span><h2>未来七天</h2></div><button id="change-city" type="button">设置城市</button></div>
+      <form id="city-form"><label for="city">搜索天气城市</label><div class="search"><input id="city" placeholder="例如：杭州 / Hangzhou" required><button>搜索</button></div><p class="hint">城市可能需要使用英文或拼音搜索。</p></form>
+      <div id="city-results"></div><div id="weather-status" class="hint" role="status">设置城市后查看天气。</div><div id="weather-content"></div>
+    </section>
+    <div class="section-head news-head"><div><span class="eyebrow">THE DAILY READ</span><h2>今日资讯</h2></div><span id="updated" class="hint"></span></div>
+    <nav aria-label="资讯栏目"><a href="#local">本地</a><a href="#society">社会</a><a href="#world">国际</a><a href="#discovery">新奇</a></nav>
+    <div id="news"><p class="hint">正在加载资讯…</p></div>
+    <footer>天气为预报，提醒并非官方预警。资讯内容请以原文为准。</footer>
+  </main>
+</body>
+</html>
