@@ -9,8 +9,6 @@ from pathlib import Path
 from article import get_article
 
 OUTPUT = Path(__file__).resolve().parent.parent / "data" / "news.json"
-MAX_REQUESTS = 20
-MAX_ARTICLES = 30
 
 
 def main():
@@ -23,7 +21,6 @@ def main():
     sources = list(data.get("sources", {}).values())
     items = [source["items"][i] for i in range(max((len(s.get("items", [])) for s in sources), default=0))
              for source in sources if i < len(source.get("items", []))]
-    attempts = 0
     for item in items:
             item.pop("_content", None)
             if item.get("summary") and item.get("summary_basis") == "article":
@@ -33,10 +30,6 @@ def main():
             if not enabled:
                 item["summary_status"] = "unconfigured"
                 continue
-            if used >= MAX_REQUESTS or attempts >= MAX_ARTICLES:
-                item["summary_status"] = "pending"
-                continue
-            attempts += 1
             try:
                 original_url, content = get_article(item["url"])
                 item["original_url"] = original_url

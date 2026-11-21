@@ -11,7 +11,10 @@ function selectCategory(category) {
   document.querySelectorAll('nav [data-category]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.category === category)));
   document.querySelectorAll('#news .news-section').forEach(section => { section.hidden = section.id !== category; });
 }
-document.querySelectorAll('nav [data-category]').forEach(button => button.addEventListener('click', () => selectCategory(button.dataset.category)));
+document.querySelectorAll('nav [data-category]').forEach(button => button.addEventListener('click', () => {
+  selectCategory(button.dataset.category);
+  document.querySelector('nav').scrollIntoView({block:'start', behavior:'auto'});
+}));
 
 async function loadNews() {
   try {
