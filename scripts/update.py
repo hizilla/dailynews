@@ -6,11 +6,41 @@ import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
+from html.parser import HTMLParser
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 OUTPUT = ROOT / "data" / "news.json"
 CATEGORIES = ("local", "society", "world", "discovery")
+
+
+class PlainText(HTMLParser):
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.parts = []
+        self.ignored = 0
+
+    def handle_starttag(self, tag, attrs):
+        if tag in ("script", "style"):
+            self.ignored += 1
+        if tag in ("p", "br", "div", "li"):
+            self.parts.append(" ")
+
+    def handle_endtag(self, tag):
+        if tag in ("script", "style") and self.ignored:
+            self.ignored -= 1
+        if tag in ("p", "div", "li"):
+            self.parts.append(" ")
+
+    def handle_data(self, data):
+        if not self.ignored:
+            self.parts.append(data)
+
+
+def plain_html(value):
+    parser = PlainText()
+    parser.feed(value)
+    return re.sub(r"\s+", " ", "".join(parser.parts)).strip()
 
 
 def text(element, name):
@@ -34,7 +64,10 @@ def fetch(feed, city):
             link = node.get("href", "") if node is not None else ""
         if not title or urllib.parse.urlparse(link).scheme not in ("http", "https"):
             continue
-        result.append({"title": re.sub(r"\s+", " ", title), "url": link,
+        description = text(entry, "{http://purl.org/rss/1.0/modules/content/}encoded") or text(entry, "description") or text(entry, atom + "content") or text(entry, atom + "summary")
+        # Google News descriptions are generally lists of related headlines, not article text.
+        content = "" if urllib.parse.urlparse(url).hostname == "news.google.com" else plain_html(description)
+        result.append({"title": re.sub(r"\s+", " ", title), "url": link, "_content": content[:6000],
                        "published": text(entry, "pubDate") or text(entry, atom + "published") or text(entry, atom + "updated"),
                        "source": text(entry, "source") or feed["name"]})
     if not result:
@@ -61,6 +94,11 @@ def main():
         now = datetime.now(timezone.utc).isoformat()
         try:
             sources[key] = {"category": category, "name": feed["name"], "items": fetch(feed, city), "updated": now, "error": False}
+            old_items = {item["url"]: item for item in old_sources.get(key, {}).get("items", [])}
+            for item in sources[key]["items"]:
+                old = old_items.get(item["url"], {})
+                if old.get("title") == item["title"] and old.get("summary"):
+                    item["summary"] = old["summary"]
         except Exception as exc:
             print(f"获取 {feed['name']} 失败: {exc}")
             sources[key] = dict(old_sources.get(key, {"category": category, "name": feed["name"], "items": [], "updated": None}), error=True)

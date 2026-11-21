@@ -19,12 +19,24 @@
 - 本地栏目取决于配置的城市和可用新闻源；不输入城市时会显示配置提示。
 - 日期按上海时间显示；网页无需定位权限和账号。
 
+## 配置 AI 摘要
+
+摘要在 GitHub Actions 中生成，手机不直接调用模型。默认使用 MiniMax 国内平台的 `MiniMax-M3` 和 `https://api.minimax.cn/v1/chat/completions`，请求时关闭可选的 thinking。调用可能产生费用，免费额度及价格以 [MiniMax 官方价格](https://platform.minimaxi.com/docs/pricing/overview)及账户实际额度为准。在仓库 Settings → Secrets and variables → Actions 中配置：
+
+1. 在 **Secrets** 新增 `LLM_API_KEY`：MiniMax API 密钥（不要提交到仓库）。
+2. 在 Actions 中手动运行 **Update and deploy**。
+
+可选：在 **Variables** 设置 `LLM_API_URL` 和 `LLM_MODEL` 覆盖默认值。国际平台的接口为 `https://api.minimax.io/v1/chat/completions`，密钥需与对应平台匹配。其他 OpenAI 兼容服务也可通过这两个变量配置。
+
+每次运行最多请求 20 条，已成功的摘要随数据缓存复用；未配置、生成失败或超出本次限额的条目会显示状态，并在后续运行时重试。摘要需要订阅源提供足够的文章内容；Google News 的 RSS 通常只有标题及相关报道链接，因此这些条目会显示内容不足。可以在 `config.json` 中改用提供正文或较完整摘要、允许使用的 RSS 源。程序不会凭标题编造细节，也不会绕过付费墙。新闻材料会发送给你选择的模型服务商，生成的摘要会发布到公开网页。源内容仅用于生成，不写入公开页面数据；已生成的摘要可能有误，请以来源为准。
+
 ## 本地生成与预览
 
 需要 Python 3.9 或以上，无第三方依赖：
 
 ```sh
 python3 scripts/update.py
+python3 scripts/summarize.py
 python3 scripts/weather.py
 python3 -m http.server 8000
 ```

@@ -24,6 +24,12 @@ jobs:
           restore-keys: news-
       - name: Update feeds
         run: python3 scripts/update.py
+      - name: Summarize articles
+        env:
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          LLM_API_URL: ${{ vars.LLM_API_URL }}
+          LLM_MODEL: ${{ vars.LLM_MODEL }}
+        run: python3 scripts/summarize.py
       - name: Update Hangzhou weather
         run: python3 scripts/weather.py
       - uses: actions/cache/save@v4

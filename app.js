@@ -29,7 +29,9 @@ async function loadNews() {
         let url;
         try { url = new URL(item.url); } catch { return ''; }
         if (!['http:', 'https:'].includes(url.protocol)) return '';
-        return `<a class="article" href="${escapeHtml(url.href)}" target="_blank" rel="noopener noreferrer"><div class="article-title">${escapeHtml(item.title)}</div><div class="meta">${escapeHtml(item.source)}${time(item.published) ? ' · ' + escapeHtml(time(item.published)) : ''} ↗</div></a>`;
+        const messages = {insufficient:'来源未提供足够内容，暂无法生成摘要。', unconfigured:'摘要服务尚未配置。', pending:'摘要等待下次更新。', failed:'摘要生成失败，将在下次更新时重试。'};
+        const summary = item.summary ? `<p class="summary">${escapeHtml(item.summary)}</p><span class="summary-label">AI 摘要 · 请以原文为准</span>` : `<p class="summary-status">${escapeHtml(messages[item.summary_status] || '暂无摘要。')}</p>`;
+        return `<article class="article"><div class="article-title">${escapeHtml(item.title)}</div>${summary}<div class="meta">${escapeHtml(item.source)}${time(item.published) ? ' · ' + escapeHtml(time(item.published)) : ''} · <a href="${escapeHtml(url.href)}" target="_blank" rel="noopener noreferrer">查看来源 ↗</a></div></article>`;
       }).join('');
       const empty = key === 'local' && !data.city ? '请在仓库 config.json 中设置城市后重新部署。' : '暂无可用资讯，请稍后再试。';
       return `<section class="news-section" id="${key}"><h3>${escapeHtml(title)}</h3><p class="hint">${escapeHtml(status)}</p>${list || `<p class="hint">${empty}</p>`}</section>`;
