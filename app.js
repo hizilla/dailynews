@@ -13,7 +13,10 @@ function selectCategory(category) {
 }
 document.querySelectorAll('nav [data-category]').forEach(button => button.addEventListener('click', () => {
   selectCategory(button.dataset.category);
-  document.querySelector('nav').scrollIntoView({block:'start', behavior:'auto'});
+  const news = $('#news');
+  const nav = document.querySelector('nav');
+  const top = window.scrollY + news.getBoundingClientRect().top - nav.offsetHeight;
+  window.scrollTo({top: Math.max(0, top), behavior:'auto'});
 }));
 
 async function loadNews() {
@@ -96,7 +99,8 @@ async function loadWeather(place) {
     const description = code => code == null ? '未知' : code === 0 ? '晴' : code <= 3 ? '多云' : code <= 48 ? '雾' : code <= 67 ? '雨' : code <= 77 ? '雪' : code <= 82 ? '阵雨' : code <= 86 ? '阵雪' : '雷雨';
     const weatherIcon = code => code == null ? '🌡️' : code === 0 ? '☀️' : code <= 3 ? '⛅' : code <= 48 ? '🌫️' : code <= 67 ? '🌧️' : code <= 77 ? '🌨️' : code <= 82 ? '🌦️' : code <= 86 ? '🌨️' : '⛈️';
     const number = value => Number.isFinite(value) ? Math.round(value) : '—';
-    const days = d.time.map((day, i) => `<div class="day">${escapeHtml(day.slice(5))}<span class="weather-icon" aria-hidden="true">${weatherIcon(d.weather_code[i])}</span>${description(d.weather_code[i])}<strong>${number(d.temperature_2m_max[i])}° / ${number(d.temperature_2m_min[i])}°</strong>降雨 ${number(d.precipitation_probability_max[i])}%</div>`).join('');
+    const weekday = day => ['周日','周一','周二','周三','周四','周五','周六'][new Date(`${day}T00:00:00Z`).getUTCDay()] || '';
+    const days = d.time.map((day, i) => `<div class="day">${escapeHtml(day.slice(5))}<br>${weekday(day)}<span class="weather-icon" aria-hidden="true">${weatherIcon(d.weather_code[i])}</span>${description(d.weather_code[i])}<strong>${number(d.temperature_2m_max[i])}° / ${number(d.temperature_2m_min[i])}°</strong>降雨 ${number(d.precipitation_probability_max[i])}%</div>`).join('');
     const alerts = [];
     if (d.precipitation_probability_max.slice(0, 2).some(n => n != null && n >= 70)) alerts.push('今明两天有较高降雨概率，出门可带伞。');
     if (d.temperature_2m_max[0] != null && d.temperature_2m_max[1] != null && d.temperature_2m_max[0] - d.temperature_2m_max[1] >= 6) alerts.push('明日最高温较今天预计下降至少 6°C。');
