@@ -1,7 +1,8 @@
 name: Update and deploy
 on:
   schedule:
-    - cron: '17 */3 * * *'
+    # GitHub 的 schedule 可能延迟，因此每小时触发两次；脚本按三小时窗口防止重复发布。
+    - cron: '17,47 * * * *'
   workflow_dispatch:
   push:
     branches: [main]
@@ -15,6 +16,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      update: ${{ steps.update-window.outputs.update || steps.update-window-default.outputs.update }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -28,28 +31,63 @@ jobs:
           path: data/
           key: news-${{ github.run_id }}
           restore-keys: news-
+      - name: Check scheduled update window
+        id: update-window
+        if: github.event_name == 'schedule'
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import urllib.request
+          from datetime import datetime, timezone
+          update = True
+          try:
+              owner, repo = os.environ['GITHUB_REPOSITORY'].split('/')
+              url = f"https://{owner}.github.io/{repo}/data/news.json?check={int(datetime.now(timezone.utc).timestamp())}"
+              with urllib.request.urlopen(url, timeout=15) as response:
+                  attempted = datetime.fromisoformat(json.load(response)['attempted'])
+              age = (datetime.now(timezone.utc) - attempted).total_seconds()
+              update = not (0 <= age < 165 * 60)
+          except (KeyError, TypeError, ValueError, OSError):
+              pass
+          print(f"update={'true' if update else 'false'}")
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as output:
+              output.write(f"update={'true' if update else 'false'}\n")
+          PY
+      - name: Mark manual or push update
+        id: update-window-default
+        if: github.event_name != 'schedule'
+        run: echo "update=true" >> "$GITHUB_OUTPUT"
       - name: Update feeds
+        if: steps.update-window.outputs.update == 'true' || steps.update-window-default.outputs.update == 'true'
         run: python3 scripts/update.py
       - name: Update Weibo trends
+        if: steps.update-window.outputs.update == 'true' || steps.update-window-default.outputs.update == 'true'
         run: python3 scripts/hotsearch.py
       - name: Summarize articles
+        if: steps.update-window.outputs.update == 'true' || steps.update-window-default.outputs.update == 'true'
         env:
           LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
           LLM_API_URL: ${{ vars.LLM_API_URL }}
           LLM_MODEL: ${{ vars.LLM_MODEL }}
         run: python3 scripts/summarize.py
       - name: Update Hangzhou weather
+        if: steps.update-window.outputs.update == 'true' || steps.update-window-default.outputs.update == 'true'
         run: python3 scripts/weather.py
       - uses: actions/cache/save@v4
+        if: steps.update-window.outputs.update == 'true' || steps.update-window-default.outputs.update == 'true'
         with:
           path: data/
           key: news-${{ github.run_id }}
       - uses: actions/configure-pages@v5
+        if: steps.update-window.outputs.update == 'true' || steps.update-window-default.outputs.update == 'true'
       - uses: actions/upload-pages-artifact@v3
+        if: steps.update-window.outputs.update == 'true' || steps.update-window-default.outputs.update == 'true'
         with:
           path: .
   deploy:
     needs: build
+    if: needs.build.outputs.update == 'true'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
