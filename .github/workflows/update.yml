@@ -30,6 +30,8 @@ jobs:
           restore-keys: news-
       - name: Update feeds
         run: python3 scripts/update.py
+      - name: Update Weibo trends
+        run: python3 scripts/hotsearch.py
       - name: Summarize articles
         env:
           LLM_API_KEY: ${{ secrets.LLM_API_KEY }}

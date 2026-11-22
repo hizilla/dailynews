@@ -16,6 +16,7 @@
 
 - 天气：默认杭州，由 GitHub Actions 定时请求 [Open-Meteo](https://open-meteo.com/) 并随页面发布；更新失败时显示上次成功的数据和时间。切换其他城市时浏览器直接请求接口，选择保存在当前浏览器。预报降雨/降温提示是简单计算结果，**不是官方气象预警**；请保留官方预警通知。
 - 新闻：本地栏目采用杭州网，社会栏目采用网易新闻国内栏目和中国新闻网社会 RSS，新奇发现采用少数派；国际栏目使用 Google News，解析后尽量链接到媒体原文。来源、排序及可访问性受服务商影响。`config.json` 的 `feeds` 可配置 RSS/Atom 源。更新失败时页面保留上次成功的新闻，并提示失败；首次运行失败则对应栏目为空。
+- 微博热搜：通过第三方 NewsNow 接口获取最多 30 条话题，展示聚合方提供的榜单时间与微博搜索链接。接口和榜单可能延迟或不可用；失败时保留上次榜单。话题不作为新闻事实，也不根据标题生成 AI 摘要。
 - 本地栏目取决于配置的城市和可用新闻源；不输入城市时会显示配置提示。
 - 日期按上海时间显示；网页无需定位权限和账号。
 
@@ -37,6 +38,7 @@
 ```sh
 python3 -m pip install -r requirements.txt
 python3 scripts/update.py
+python3 scripts/hotsearch.py
 python3 scripts/summarize.py
 python3 scripts/weather.py
 python3 -m http.server 8000

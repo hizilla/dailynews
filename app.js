@@ -42,8 +42,27 @@ async function loadNews() {
       const empty = key === 'local' && !data.city ? '请在仓库 config.json 中设置城市后重新部署。' : '暂无可用资讯，请稍后再试。';
       return `<section class="news-section" id="${key}"><h3>${escapeHtml(title)}</h3><p class="hint">${escapeHtml(status)}</p>${list || `<p class="hint">${empty}</p>`}</section>`;
     }).join('');
-    selectCategory(activeCategory);
   } catch (error) { $('#news').innerHTML = '<p class="hint">资讯加载失败，请检查网络或稍后重试。</p>'; }
+  await loadHotSearch();
+  selectCategory(activeCategory);
+}
+
+async function loadHotSearch() {
+  let content = '<p class="hint">热搜暂不可用，请稍后再试。</p>';
+  try {
+    const response = await fetch('data/hotsearch.json', {cache:'no-store'});
+    if (!response.ok) throw Error('热搜尚未生成');
+    const data = await response.json();
+    const status = data.error ? '更新失败' + (data.updated ? '，显示上次榜单' : '') : '榜单时间';
+    const list = (data.items || []).map((item, index) => {
+      let url;
+      try { url = new URL(item.url); } catch { return ''; }
+      if (url.protocol !== 'https:' || url.hostname !== 's.weibo.com') return '';
+      return `<a class="article hot-item" href="${escapeHtml(url.href)}" target="_blank" rel="noopener noreferrer"><span class="hot-rank">${index + 1}</span><span class="article-title">${escapeHtml(item.title)}</span><span aria-hidden="true">↗</span></a>`;
+    }).join('');
+    content = `<p class="hint">${escapeHtml(status)}${data.updated ? ' · ' + escapeHtml(time(data.updated)) : ' · 时间未知'} · 数据：NewsNow 第三方聚合</p><p class="hint">热搜话题不等于新闻事实，排名及内容可能变化。</p>${list || '<p class="hint">暂无热搜数据。</p>'}`;
+  } catch {}
+  $('#news').insertAdjacentHTML('beforeend', `<section class="news-section" id="weibo"><h3>🔥 微博热搜</h3>${content}</section>`);
 }
 
 const form = $('#city-form');
