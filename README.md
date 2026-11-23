@@ -12,6 +12,39 @@
 
 工作流每半小时检查一次已发布数据的时间，距上次更新约三小时后自动更新；检查失败时也会尝试更新。多次检查用于减少 GitHub 定时任务延迟或丢失的影响，但不能保证精确时间或一定成功。也可在 Actions 中手动运行。网页会显示数据更新时间。公开仓库的 Pages 内容是公开的，请勿放入秘密信息。平台免费额度和政策可能发生变化。
 
+### 外部定时触发（可选）
+
+如果需要绕过 GitHub Actions 的定时调度，可以在长期在线的 Linux 机器上运行 `scripts/trigger_update.py`。脚本不依赖当前工作目录，通过环境变量读取配置，并在网络错误时自动重试。Token 不要写入仓库：
+
+```sh
+export DAILYNEWS_GITHUB_TOKEN='你的 GitHub token'
+export DAILYNEWS_REPOSITORY='hizilla/dailynews'
+python3 /绝对路径/dailynews/scripts/trigger_update.py
+```
+
+Token 需要对该仓库拥有触发 Actions 的权限。建议将环境变量写入仅当前用户可读的文件，例如 `~/.config/dailynews-trigger.env`，并执行 `chmod 600 ~/.config/dailynews-trigger.env`，不要直接写进 crontab。
+
+编辑当前用户的定时任务：
+
+```sh
+crontab -e
+```
+
+每三小时触发一次（按服务器本地时间）：
+
+```cron
+17 */3 * * * . "$HOME/.config/dailynews-trigger.env"; /usr/bin/python3 /绝对路径/dailynews/scripts/trigger_update.py >> "$HOME/.local/state/dailynews-trigger.log" 2>&1
+```
+
+先创建日志目录，并手动执行一次确认 Token 和权限正确：
+
+```sh
+mkdir -p ~/.config ~/.local/state
+chmod 700 ~/.config ~/.local/state
+. ~/.config/dailynews-trigger.env
+/usr/bin/python3 /绝对路径/dailynews/scripts/trigger_update.py
+```
+
 ## 数据与配置
 
 - 天气：默认杭州，由 GitHub Actions 定时请求 [Open-Meteo](https://open-meteo.com/) 并随页面发布；更新失败时显示上次成功的数据和时间。切换其他城市时浏览器直接请求接口，选择保存在当前浏览器。预报降雨/降温提示是简单计算结果，**不是官方气象预警**；请保留官方预警通知。
