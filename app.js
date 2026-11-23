@@ -31,13 +31,14 @@ async function loadNews() {
       const status = sources.map(source => `${source.name}：${source.error ? '更新失败' : '更新成功'}${source.updated ? ' · ' + time(source.updated) : ''}`).join('；');
       const items = sources.flatMap(source => source.items || []);
       const unique = items.filter((item, i) => items.findIndex(other => other.url === item.url || other.title === item.title) === i);
+      let index = 0;
       const list = unique.map(item => {
         let url;
         try { url = new URL(item.original_url || item.url); } catch { return ''; }
         if (!['http:', 'https:'].includes(url.protocol)) return '';
         const messages = {article_unavailable:'无法获取新闻原文，暂无法生成摘要。', insufficient:'原文内容不足，暂无法生成摘要。', unconfigured:'摘要服务尚未配置。', pending:'摘要等待下次更新。', failed:'摘要生成失败，将在下次更新时重试。'};
         const summary = item.summary ? `<p class="summary">${escapeHtml(item.summary)}</p><span class="summary-label">AI 摘要 · 请以原文为准</span>` : `<p class="summary-status">${escapeHtml(messages[item.summary_status] || '暂无摘要。')}</p>`;
-        return `<article class="article"><div class="article-title">${escapeHtml(item.title)}</div>${summary}<div class="meta">${escapeHtml(item.source)}${time(item.published) ? ' · ' + escapeHtml(time(item.published)) : ''} · <a href="${escapeHtml(url.href)}" target="_blank" rel="noopener noreferrer">查看来源 ↗</a></div></article>`;
+        return `<article class="article"><div class="article-title"><span class="article-rank">${++index}.</span>${escapeHtml(item.title)}</div>${summary}<div class="meta">${escapeHtml(item.source)}${time(item.published) ? ' · ' + escapeHtml(time(item.published)) : ''} · <a href="${escapeHtml(url.href)}" target="_blank" rel="noopener noreferrer">查看来源 ↗</a></div></article>`;
       }).join('');
       const empty = key === 'local' && !data.city ? '请在仓库 config.json 中设置城市后重新部署。' : '暂无可用资讯，请稍后再试。';
       return `<section class="news-section" id="${key}"><h3>${escapeHtml(title)}</h3><p class="hint">${escapeHtml(status)}</p>${list || `<p class="hint">${empty}</p>`}</section>`;
