@@ -11,7 +11,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 OUTPUT = ROOT / "data" / "news.json"
-CATEGORIES = ("local", "society", "world", "discovery")
+CATEGORIES = ("local", "society", "world")
 
 
 class PlainText(HTMLParser):

@@ -4,7 +4,6 @@
     {"category": "local", "name": "杭州新闻 · 杭州网", "url": "https://hznews.hangzhou.com.cn/", "type": "hangzhou_news"},
     {"category": "society", "name": "社会新闻 · 网易新闻", "url": "https://news.163.com/", "type": "netease_domestic"},
     {"category": "society", "name": "社会新闻 · 中国新闻网", "url": "https://www.chinanews.com.cn/rss/society.xml"},
-    {"category": "world", "name": "国际新闻 · Google News", "url": "https://news.google.com/rss/headlines/section/topic/WORLD?hl=zh-CN&gl=CN&ceid=CN:zh-Hans"},
-    {"category": "discovery", "name": "新奇发现 · 少数派", "url": "https://sspai.com/feed"}
+    {"category": "world", "name": "国际新闻 · Google News", "url": "https://news.google.com/rss/headlines/section/topic/WORLD?hl=zh-CN&gl=CN&ceid=CN:zh-Hans"}
   ]
 }

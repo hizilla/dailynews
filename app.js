@@ -25,7 +25,7 @@ async function loadNews() {
     if (!response.ok) throw Error('资讯尚未生成');
     const data = await response.json();
     $('#updated').textContent = `最近尝试更新 ${time(data.attempted)}`;
-    const categories = [['local', data.city ? `${data.city} · 本地` : '本地'], ['society','社会热点'], ['world','国际视野'], ['discovery','新奇发现']];
+    const categories = [['local', data.city ? `${data.city} · 本地` : '本地'], ['society','社会热点'], ['world','国际视野']];
     $('#news').innerHTML = categories.map(([key, title]) => {
       const sources = Object.values(data.sources || {}).filter(source => source.category === key);
       const status = sources.map(source => `${source.name}：${source.error ? '更新失败' : '更新成功'}${source.updated ? ' · ' + time(source.updated) : ''}`).join('；');
