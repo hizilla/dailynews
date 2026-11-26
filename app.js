@@ -6,6 +6,10 @@ const time = (value) => {
 };
 $('#today').textContent = new Intl.DateTimeFormat('zh-CN', {timeZone:'Asia/Shanghai', month:'long', day:'numeric', weekday:'short'}).format(new Date());
 let activeCategory = 'local';
+try {
+  const savedCategory = localStorage.getItem('dailynews-category');
+  if (['local', 'society', 'world', 'weibo'].includes(savedCategory)) activeCategory = savedCategory;
+} catch {}
 function selectCategory(category) {
   activeCategory = category;
   document.querySelectorAll('nav [data-category]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.category === category)));
@@ -13,11 +17,18 @@ function selectCategory(category) {
 }
 document.querySelectorAll('nav [data-category]').forEach(button => button.addEventListener('click', () => {
   selectCategory(button.dataset.category);
+  try { localStorage.setItem('dailynews-category', activeCategory); } catch {}
   const news = $('#news');
   const nav = document.querySelector('nav');
   const top = window.scrollY + news.getBoundingClientRect().top - nav.offsetHeight;
   window.scrollTo({top: Math.max(0, top), behavior:'auto'});
 }));
+selectCategory(activeCategory);
+const backToTop = $('#back-to-top');
+const updateBackToTop = () => { backToTop.hidden = window.scrollY < 500; };
+window.addEventListener('scroll', updateBackToTop, {passive:true});
+backToTop.addEventListener('click', () => window.scrollTo({top:0, behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'}));
+updateBackToTop();
 
 async function loadNews() {
   try {
@@ -38,11 +49,12 @@ async function loadNews() {
         if (!['http:', 'https:'].includes(url.protocol)) return '';
         const messages = {article_unavailable:'无法获取新闻原文，暂无法生成摘要。', insufficient:'原文内容不足，暂无法生成摘要。', unconfigured:'摘要服务尚未配置。', pending:'摘要等待下次更新。', failed:'摘要生成失败，将在下次更新时重试。'};
         const summary = item.summary ? `<p class="summary">${escapeHtml(item.summary)}</p><span class="summary-label">AI 摘要 · 请以原文为准</span>` : `<p class="summary-status">${escapeHtml(messages[item.summary_status] || '暂无摘要。')}</p>`;
-        return `<article class="article"><div class="article-title"><span class="article-rank">${++index}.</span>${escapeHtml(item.title)}</div>${summary}<div class="meta">${escapeHtml(item.source)}${time(item.published) ? ' · ' + escapeHtml(time(item.published)) : ''} · <a href="${escapeHtml(url.href)}" target="_blank" rel="noopener noreferrer">查看来源 ↗</a></div></article>`;
+        return `<article class="article"><a class="article-title article-title-link" href="${escapeHtml(url.href)}" target="_blank" rel="noopener noreferrer"><span class="article-rank">${++index}.</span>${escapeHtml(item.title)}</a>${summary}<div class="meta">${escapeHtml(item.source)}${time(item.published) ? ' · ' + escapeHtml(time(item.published)) : ''} · <a href="${escapeHtml(url.href)}" target="_blank" rel="noopener noreferrer">查看来源 ↗</a></div></article>`;
       }).join('');
       const empty = key === 'local' && !data.city ? '请在仓库 config.json 中设置城市后重新部署。' : '暂无可用资讯，请稍后再试。';
       return `<section class="news-section" id="${key}"><h3>${escapeHtml(title)}</h3><p class="hint">${escapeHtml(status)}</p>${list || `<p class="hint">${empty}</p>`}</section>`;
     }).join('');
+    selectCategory(activeCategory);
   } catch (error) { $('#news').innerHTML = '<p class="hint">资讯加载失败，请检查网络或稍后重试。</p>'; }
   await loadHotSearch();
   selectCategory(activeCategory);
